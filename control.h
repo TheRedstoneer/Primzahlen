@@ -14,14 +14,14 @@
 #include <pthread.h>
 #include <math.h>
 
-void createPrimeArray(unsigned int end);
+void createPrimeArray(__uint16_t end);
 void calcThread1(void *args);
 void calcThread2(void *args);
-__uint64_t calcWithMod(int start, int end);
-__uint64_t calcWithSieve(int start, int end);
-void writePrimesInArray(int index, int start, int end);
+__uint64_t calcWithMod(__uint16_t start, __uint16_t end);
+__uint64_t calcWithSieve(__uint16_t start, __uint16_t end);
+void writePrimesInArray(__uint16_t index, __uint16_t start, __uint16_t end);
 void printLong(long x);
-int findNext(int start, int mod);
+__uint16_t findNext(__uint16_t start, __uint16_t mod);
 void printLowPrimes();
 
 #define BIT_SIZE 64
@@ -30,13 +30,13 @@ void printLowPrimes();
 
 struct Parameter
 {
-	int w_start;
-	int w_end;
-	int w_primecount;
-	int w_sum;
-	int start;
-	int end;
-	int id;
+	__uint16_t w_start;
+	__uint16_t w_end;
+	__uint16_t w_primecount;
+	__uint16_t w_sum;
+	__uint16_t start;
+	__uint16_t end;
+	__uint16_t id;
 };
 
 // Globale Variablen

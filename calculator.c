@@ -7,11 +7,11 @@
 
 #include "control.h"
 
-void createPrimeArray(unsigned int end)
+void createPrimeArray(unsigned __uint16_t end)
 {
 
 
-	int mod, i, j;
+	__uint16_t mod, i, j;
 	unsigned short isMod;
 	for(i = 3; i < end; i +=2)
 	{
@@ -53,9 +53,9 @@ void calcThread2(void *arg)
 	//bitfield[p->id] = erg;
 }
  //
-void writePrimesInArray(int index, int start, int end)
+void writePrimesInArray(__uint16_t index, __uint16_t start, __uint16_t end)
 {
-	int i, mod;
+	__uint16_t i, mod;
 	unsigned short isMod;
 
 	if(!(start % 2)) start++; //if even, start with +1
@@ -76,10 +76,10 @@ void writePrimesInArray(int index, int start, int end)
 	}
 }
 
-__uint64_t calcWithMod(int start, int end)
+__uint64_t calcWithMod(__uint16_t start, __uint16_t end)
 {
 	__uint64_t i, erg = 0;
-	int mod;
+	__uint16_t mod;
 	unsigned short isMod;
   if(!(start % 2)) start++;
 	for(i = start; i < end+1; i+=2)
@@ -99,13 +99,13 @@ __uint64_t calcWithMod(int start, int end)
 	return erg;
 }
 
-__uint64_t calcWithSieve(int start, int end)
+__uint64_t calcWithSieve(__uint16_t start, __uint16_t end)
 {
 	__uint16_t* countArr = (__uint16_t*) malloc(primesUntilSqare * sizeof(countArr));
-	unsigned int j, i;
+	unsigned __uint16_t j, i;
 	__uint64_t erg = 0;
 	__uint8_t isPrime;
-	//unsigned int tempErgCount = 0;
+	//unsigned __uint16_t tempErgCount = 0;
 	for(i = primesUntilSqare; i > 0; i--)
 	{// (p - [(findNext(start,p)-start)/2]%p)%p
 		 countArr[i-1] = (low_primes[i-1] - ((findNext(start, low_primes[i-1])-start)/2)%low_primes[i-1])%low_primes[i-1]; //reset counting array
@@ -138,7 +138,7 @@ __uint64_t calcWithSieve(int start, int end)
 return erg;
 }
 
-int findNext(__uint16_t start, __uint16_t mod)
+__uint16_t findNext(__uint16_t start, __uint16_t mod)
 {
 	__uint16_t x = start;
 	while(x % mod) x+= 2;
