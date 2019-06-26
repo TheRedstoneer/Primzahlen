@@ -7,7 +7,7 @@
 
 #include "control.h"
 
-void createPrimeArray(unsigned __uint16_t end)
+void createPrimeArray(__uint16_t end)
 {
 
 
@@ -102,10 +102,10 @@ __uint64_t calcWithMod(__uint16_t start, __uint16_t end)
 __uint64_t calcWithSieve(__uint16_t start, __uint16_t end)
 {
 	__uint16_t* countArr = (__uint16_t*) malloc(primesUntilSqare * sizeof(countArr));
-	unsigned __uint16_t j, i;
+	__uint16_t j, i;
 	__uint64_t erg = 0;
 	__uint8_t isPrime;
-	//unsigned __uint16_t tempErgCount = 0;
+	//__uint16_t tempErgCount = 0;
 	for(i = primesUntilSqare; i > 0; i--)
 	{// (p - [(findNext(start,p)-start)/2]%p)%p
 		 countArr[i-1] = findNext(start, low_primes[i-1]);	//setup counting array
