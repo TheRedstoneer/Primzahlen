@@ -48,6 +48,8 @@ print("X ?\n--------------------------------------------------------------------
 for p in range(start,70,2):
 	print(p,end="\t")
 	for i in range(9):
-		xList[i][0] = (xList[i][0]+2) % xList[i][1]
+		xList[i][0] +=2
+		if(xList[i][0] >= xList[i][1]):
+			xList[i][0] -= xList[i][1]
 		print(xList[i][0],end="\t")
 	print(crossOut(xList))

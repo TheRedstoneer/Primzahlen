@@ -108,8 +108,8 @@ __uint64_t calcWithSieve(__uint16_t start, __uint16_t end)
 	//unsigned __uint16_t tempErgCount = 0;
 	for(i = primesUntilSqare; i > 0; i--)
 	{// (p - [(findNext(start,p)-start)/2]%p)%p
-		 countArr[i-1] = (low_primes[i-1] - ((findNext(start, low_primes[i-1])-start)/2)%low_primes[i-1])%low_primes[i-1]; //reset counting array
-		 printf("%i starts on %i (%i)\n", low_primes[i-1], countArr[i-1], findNext(start, low_primes[i-1]));
+		 countArr[i-1] = findNext(start, low_primes[i-1]);	//setup counting array
+		 printf("%i starts on %i\n", low_primes[i-1], countArr[i-1]);
 	 }
 
   if(!(start % 2)) start++; //if even, start with +1
@@ -125,7 +125,7 @@ __uint64_t calcWithSieve(__uint16_t start, __uint16_t end)
 			}
 			countArr[j]++;
 			//if counter reached end from counter
-			if(countArr[j] == low_primes[j]) countArr[j] = 0;
+			if(countArr[j] >= low_primes[j]) countArr[j] -= low_primes[j];
 
 		}
 		if(isPrime)
