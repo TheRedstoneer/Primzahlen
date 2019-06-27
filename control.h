@@ -18,7 +18,7 @@ void createPrimeArray(__uint32_t end);
 void calcThread1(void *args);
 void calcThread2(void *args);
 __uint64_t calcWithMod(__uint32_t start, __uint32_t end);
-__uint64_t calcWithSieve(__uint32_t start, __uint32_t end);
+void calcWithSieve(__uint32_t start, __uint32_t end);
 void writePrimesInArray(__uint32_t index, __uint32_t start, __uint32_t end);
 void printLong(long x);
 __uint32_t findStart(__uint32_t start, __uint32_t mod);

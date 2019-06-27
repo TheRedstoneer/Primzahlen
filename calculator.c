@@ -44,8 +44,8 @@ void calcThread2(void *arg)
 
 	printf("Thread %i: Written all low_primes into array!\n",p->id+1);
 	pthread_barrier_wait(&barrier);
-	erg1 = calcWithSieve(p->start, p->end);
-	erg2 = calcWithMod(p->start, p->end);
+	calcWithSieve(p->start, p->end);
+	//erg2 = calcWithMod(p->start, p->end);
 	if(erg1 == erg2)
 	printf("Thread %i: (%i-%i) has [%li] Primenumbers!\n",p->id+1,p->start,p->end,erg2);
 	else
@@ -99,7 +99,7 @@ __uint64_t calcWithMod(__uint32_t start, __uint32_t end)
 	return erg;
 }
 
-__uint64_t calcWithSieve(__uint32_t start, __uint32_t end)
+void calcWithSieve(__uint32_t start, __uint32_t end)
 {
 	__uint32_t* countArr = (__uint32_t*) malloc(primesUntilSqare * sizeof(countArr));
 	__uint32_t j, i;
