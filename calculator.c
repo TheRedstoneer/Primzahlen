@@ -26,7 +26,7 @@ void createPrimeArray(__uint32_t end)
 	}
 }
 
-void calcThread1(void *arg)
+void calcThread(void *arg)
 {
 	struct Parameter *p;
 	p = (struct Parameter*) arg;
@@ -51,7 +51,7 @@ void calcThreadDebug(void *arg)
 
 	printf("Thread %i: Written all low_primes into array!\n",p->id+1);
 	pthread_barrier_wait(&barrier);
-	calcWithSieve(p->start, p->end);
+	erg1 = calcWithSieve(p->start, p->end);
 	erg2 = calcWithMod(p->start, p->end);
 	if(erg1 == erg2)
 	printf("Thread %i: (%i-%i) has [%li] Primenumbers!\n",p->id+1,p->start,p->end,erg2);
@@ -114,7 +114,7 @@ __uint64_t calcWithSieve(__uint32_t start, __uint32_t end)
 	if(!(start % 2)) start++; //if even, start with +1
 	for(i = primesUntilSqare; i > 0; i--)
 	{// (p - [(findNext(start,p)-start)/2]%p)%p
-		 countArr[i-1] = findStart(start, low_primes[i-1]);	//setup counting array
+		 countArr[i-1] = findStart(start-2, low_primes[i-1]);	//setup counting array
 		 //printf("%i starts on %i\n", low_primes[i-1], countArr[i-1]);
 	 }
 

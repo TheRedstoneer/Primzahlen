@@ -88,6 +88,7 @@ int main(int argc, char *argv[]) // Primzahl Threads
 	}
 	printf("Created %i Threads!\n",n_threads );
 	pthread_barrier_wait(&barrier);
+	if(debug) printf("- Debug -");
 	printf("Continue...\n");
 
 	//Threads haben ihren bereich fertig gerechnet
