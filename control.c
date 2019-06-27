@@ -12,18 +12,20 @@ int main(int argc, char *argv[]) // Primzahl Threads
 {
 	pthread_t* thread_id;
 	int* singleResult;
-	__uint32_t primzahl, n_threads, i, status, bitlen, w_bitlen, wurzel, pre_calc;
+	__uint32_t primzahl, n_threads, i, bitlen, w_bitlen, wurzel, pre_calc;
 	__uint32_t mainResult;
+	__uint8_t debug = 0;
 	struct Parameter* param;
 
-	if(argc != 3)
+	if(argc < 3 || argc > 4)
 	{
-		printf("USAGE: ./Primzahlen <MAX NUMBER> <THREAD COUNT>\n");
+		printf("USAGE: ./Primzahlen <MAX NUMBER> <THREAD COUNT> [debug]\n");
 		return(-1);
 
 	}
 	else
 	{
+		if(argc == 4) debug = 1;
 		primzahl = (__uint32_t) strtol(argv[1], NULL, 10);
 		n_threads = (__uint32_t) strtol(argv[2], NULL, 10);
 		if(n_threads > 32)
@@ -78,11 +80,11 @@ int main(int argc, char *argv[]) // Primzahl Threads
 		param[i].w_primecount = calcWithMod(param[i].w_start,param[i].w_end);
 		if(i) param[i].w_sum += param[i-1].w_primecount + param[i-1].w_sum;
 		param[i].id = i; 									//set ID
-		if(pthread_create(&thread_id[i], NULL, calcThread2, (void*)&param[i]))
-		{
-			printf("Could not create Thread %i.\n", i);
-			return -1;
-		}
+		if(debug)
+			pthread_create(&thread_id[i], NULL, calcThreadDebug, (void*)&param[i]);
+		else
+			pthread_create(&thread_id[i], NULL, calcThread, (void*)&param[i]);
+
 	}
 	printf("Created %i Threads!\n",n_threads );
 	pthread_barrier_wait(&barrier);
@@ -98,6 +100,7 @@ int main(int argc, char *argv[]) // Primzahl Threads
 			return -1;
 		}
 	}
+	if(debug) return 0;
 	//printLowPrimes();
 	mainResult = primesUntilSqare + 1;
 	for(i = bitlen; i > 0; i--)

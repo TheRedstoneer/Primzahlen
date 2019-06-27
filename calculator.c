@@ -30,10 +30,17 @@ void calcThread1(void *arg)
 {
 	struct Parameter *p;
 	p = (struct Parameter*) arg;
-	printf("Starting Thread %i : %i-%i\n", p->id+1, p->start, p->end);
+	printf("Starting Thread %i : %i-%i 	[and sqrt(%i-%i) with %i Prime numbers (i=%i)]\n",
+	 p->id+1, p->start, p->end, p->w_start, p->w_end, p->w_primecount, p->w_sum);
+	writePrimesInArray(p->w_sum, p->w_start, p->w_end);
+
+	printf("Thread %i: Written all low_primes into array!\n",p->id+1);
+	pthread_barrier_wait(&barrier);
+	calcWithSieve(p->start, p->end);
+	printf("Thread %i: (%i-%i) finished!\n",p->id+1,p->start,p->end);
 }
 
-void calcThread2(void *arg)
+void calcThreadDebug(void *arg)
 {
 	struct Parameter *p;
 	p = (struct Parameter*) arg;
@@ -45,12 +52,11 @@ void calcThread2(void *arg)
 	printf("Thread %i: Written all low_primes into array!\n",p->id+1);
 	pthread_barrier_wait(&barrier);
 	calcWithSieve(p->start, p->end);
-	//erg2 = calcWithMod(p->start, p->end);
+	erg2 = calcWithMod(p->start, p->end);
 	if(erg1 == erg2)
 	printf("Thread %i: (%i-%i) has [%li] Primenumbers!\n",p->id+1,p->start,p->end,erg2);
 	else
 	printf("Thread %i: (%i-%i) has %li / %li Primenumbers!\n",p->id+1,p->start,p->end,erg2,erg1-erg2);
-	//bitfield[p->id] = erg;
 }
  //
 void writePrimesInArray(__uint32_t index, __uint32_t start, __uint32_t end)
@@ -99,7 +105,7 @@ __uint64_t calcWithMod(__uint32_t start, __uint32_t end)
 	return erg;
 }
 
-void calcWithSieve(__uint32_t start, __uint32_t end)
+__uint64_t calcWithSieve(__uint32_t start, __uint32_t end)
 {
 	__uint32_t* countArr = (__uint32_t*) malloc(primesUntilSqare * sizeof(countArr));
 	__uint32_t j, i;
