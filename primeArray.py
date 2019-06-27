@@ -5,7 +5,7 @@ def findNext(start, mod):
 	x = start
 	while(x % mod > 0):
 		x += 2
-	return mod-(x-start)%mod
+	return mod-int((x-start)/2)%mod
 
 def crossOut(l):
 	for i in range(9):
@@ -18,7 +18,7 @@ smallPrimes = list()
 xList = list()
 start = 15
 
-for i in range(3,200,2):
+for i in range(3,100,2):
     isPrime = True
     for mod in range(3,int(math.sqrt(i))+1,2):
         if(i % mod == 0):
@@ -48,7 +48,7 @@ print("X ?\n--------------------------------------------------------------------
 for p in range(start,70,2):
 	print(p,end="\t")
 	for i in range(9):
-		xList[i][0] +=2
+		xList[i][0] +=1
 		if(xList[i][0] >= xList[i][1]):
 			xList[i][0] -= xList[i][1]
 		print(xList[i][0],end="\t")
