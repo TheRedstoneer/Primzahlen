@@ -56,7 +56,7 @@ void calcThreadDebug(void *arg)
 	if(erg1 == erg2)
 	printf("Thread %i: (%i-%i) has [%li] Primenumbers!\n",p->id+1,p->start,p->end,erg2);
 	else
-	printf("Thread %i: (%i-%i) has %li / %li Primenumbers!\n",p->id+1,p->start,p->end,erg2,erg1-erg2);
+	printf("Thread %i: (%i-%i) has %li / %li Primenumbers!\n",p->id+1,p->start,p->end,erg2,erg1);
 }
  //
 void writePrimesInArray(__uint32_t index, __uint32_t start, __uint32_t end)
@@ -112,30 +112,37 @@ __uint64_t calcWithSieve(__uint32_t start, __uint32_t end)
 	__uint64_t erg = 0;
 	__uint8_t isPrime;
 	if(!(start % 2)) start++; //if even, start with +1
-	for(i = primesUntilSqare; i > 0; i--)
+	for(i = primesUntilSqare; i; i--)
 	{// (p - [(findNext(start,p)-start)/2]%p)%p
 		 countArr[i-1] = findStart(start-2, low_primes[i-1]);	//setup counting array
 		 //printf("%i starts on %i\n", low_primes[i-1], countArr[i-1]);
 	 }
 
+
+	//go through every uneven number
 	for(i = start; i < end+1; i+=2)
 	{
-		isPrime = 1;
+		isPrime = 1; //lets say it's a prime
+
+		//now go through every low prime
 		for(j = 0; j < primesUntilSqare; j++)
 		{
-			if(!countArr[j] && isPrime) //array[] = 0 AND isPrime = 1
+			//it's not a prime if the countArr is 0 -> divide-able
+			if(isPrime && !countArr[j]) //array[] = 0 AND isPrime = 1
 			{
-				isPrime = 0; //no prime
+				isPrime = 0;
 				//printf("n=%i (%i/%i)\n",i,countArr[j],low_primes[j]);
 			}
 			countArr[j]++;
-			//if counter reached end from counter
+			//if counter reached end the low prime -> reset
 			if(countArr[j] >= low_primes[j]) countArr[j] -= low_primes[j];
+
+			//if(!(countArr[j-1] - low_primes[j-1])) countArr[j-1] = 0;
 
 		}
 		if(isPrime)
 		{
-			erg++;
+			erg++; //debug
 			SetBit(bitfield,i); //set prime
 			//printf("%i\n",i);
 		}

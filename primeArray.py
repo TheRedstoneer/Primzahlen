@@ -27,11 +27,12 @@ def calcWithSieve(end):
 
 	for i in range(wurzel+1,end,2):
 		isPrime = True
-		print(f"\n{i}\t",end="")
+		#print(f"\n{i}\t",end="")
 		for j in range(len(countArr)):
 			countArr[j] += 1
+			#count reached maximum -> reset
 			if(countArr[j] == low_primes[j]): countArr[j] = 0
-			print(countArr[j],end="\t")
+			#print(countArr[j],end="\t")
 
 			if(countArr[j] == 0 and isPrime): #array[] = 0 AND isPrime = 1
 				isPrime = False
@@ -50,9 +51,12 @@ def getSmallPrimes(max):
 	            break
 	    if(isPrime):
 	        smallPrimes.append(i)
+	print(f"Found {len(smallPrimes)} Primes!")
 	return smallPrimes
 
-x = calcWithSieve(1000)
+#78497
+x = calcWithSieve(1000000)
+#getSmallPrimes(1000000)
 print(f"\n\n:{x}")
 sys.exit(1)
 
@@ -73,7 +77,8 @@ print(xList)
 15:  0  0  1   2  2 15 15 15 15
 """
 
-print(f"Found {len(smallPrimes)} Primes!")
+getSmallPrimes(100000)
+
 print("P",end="\t")
 for i in range(9):
 	print(smallPrimes[i],end="\t")
