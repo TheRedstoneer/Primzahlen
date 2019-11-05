@@ -35,8 +35,12 @@ void calcThread(void *arg)
 	writePrimesInArray(p->w_sum, p->w_start, p->w_end);
 
 	printf("Thread %i: Written all low_primes into array!\n",p->id+1);
+	/* 100.000 -> 5.000 bits / 10 threads (just uneven numbers)
+		-> 5.000 / 64 = 79 fields
+	*/
+
 	pthread_barrier_wait(&barrier);
-	calcWithSieve(p->start, p->end);
+	calcWithSieve(p->start, p->end,bits_pT*p->id);
 	printf("Thread %i: (%i-%i) finished!\n",p->id+1,p->start,p->end);
 }
 
@@ -51,12 +55,17 @@ void calcThreadDebug(void *arg)
 
 	printf("Thread %i: Written all low_primes into array!\n",p->id+1);
 	pthread_barrier_wait(&barrier);
-	erg1 = calcWithSieve(p->start, p->end);
+	erg1 = calcWithSieve(p->start, p->end,bits_pT*p->id);
 	erg2 = calcWithMod(p->start, p->end);
 	if(erg1 == erg2)
 	printf("Thread %i: (%i-%i) has [%li] Primenumbers!\n",p->id+1,p->start,p->end,erg2);
 	else
-	printf("Thread %i: (%i-%i) has %li / %li Primenumbers!\n",p->id+1,p->start,p->end,erg2,erg1);
+	{
+		if(erg1 > erg2)		erg2 = erg1 - erg2;
+		else erg2 -= erg1;
+		printf("Thread %i: (%i-%i) has %li / %li Primenumbers!\n",p->id+1,p->start,p->end,erg1,erg2);
+	}
+
 }
  //
 void writePrimesInArray(__uint32_t index, __uint32_t start, __uint32_t end)
@@ -105,22 +114,22 @@ __uint64_t calcWithMod(__uint32_t start, __uint32_t end)
 	return erg;
 }
 
-__uint64_t calcWithSieve(__uint32_t start, __uint32_t end)
+__uint64_t calcWithSieve(__uint32_t start, __uint32_t end, __uint32_t arrIndex)
 {
 	__uint32_t* countArr = (__uint32_t*) malloc(primesUntilSqare * sizeof(countArr));
 	__uint32_t j, i;
-	__uint64_t erg = 0;
+	__uint64_t erg = 0, bit = 1, bitC = 1;
 	__uint8_t isPrime;
 	if(!(start % 2)) start++; //if even, start with +1
 	for(i = primesUntilSqare; i; i--)
 	{// (p - [(findNext(start,p)-start)/2]%p)%p
 		 countArr[i-1] = findStart(start-2, low_primes[i-1]);	//setup counting array
 		 //printf("%i starts on %i\n", low_primes[i-1], countArr[i-1]);
-	 }
+	}
 
 
 	//go through every uneven number
-	for(i = start; i < end+1; i+=2)
+	for(i = start; i < end; i+=2)
 	{
 		isPrime = 1; //lets say it's a prime
 
@@ -143,8 +152,18 @@ __uint64_t calcWithSieve(__uint32_t start, __uint32_t end)
 		if(isPrime)
 		{
 			erg++; //debug
-			SetBit(bitfield,i); //set prime
+			//set bit!
+			bitfield[arrIndex] |= bit;
 			//printf("%i\n",i);
+		}
+
+		bit = bit << 1; //shift ->
+		bitC++;
+		if(bitC == 64)
+		{									//test for overflow (64 bits)
+			bitC = 1;			  //-> reset
+			bit = 1;
+			arrIndex++;
 		}
 	}
 return erg;

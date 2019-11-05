@@ -42,19 +42,22 @@ int main(int argc, char *argv[]) // Primzahl Threads
 		return -1;
 	}
 // Array for SQRT Bit Array
-	wurzel = sqrt(primzahl);
-	w_bitlen = (int)(wurzel / BIT_SIZE+1);
-	w_bitfield = (__uint64_t*) malloc(w_bitlen*BIT_SIZE);
-	RESET_FIELD(w_bitfield,w_bitlen);
+	wurzel = sqrt(primzahl)+1;
+	//w_bitlen = (int)(wurzel / BIT_SIZE+1);
+	//w_bitfield = (__uint64_t*) malloc(w_bitlen*BIT_SIZE);
+	//RESET_FIELD(w_bitfield,w_bitlen);
 
 	primesUntilSqare = calcWithMod(3,wurzel); //get prime number count til sqrt (without 2)
 	printf("Wurzel=%i Anzahl Primzahlen bis zur Wurzel=%i\n",wurzel,primesUntilSqare);
 	low_primes = (__uint32_t*) malloc(32*primesUntilSqare); //create array
 
 // Array for Bit Array
-	bitlen = (__uint32_t)(primzahl / BIT_SIZE+1);
+// (prime_max - sqrt) / 2 (uneven) / 64
+	bitlen = (__uint32_t) ((primzahl-wurzel) / (2*BIT_SIZE) +n_threads);
 	bitfield = (__uint64_t*) malloc(bitlen*BIT_SIZE);
+	bits_pT = (__uint32_t) bitlen / n_threads + 1;
 	RESET_FIELD(bitfield,bitlen);
+	printf("Created %i Threads! (%i fields, %i/thread)\n",n_threads, bitlen, bits_pT );
 
 	thread_id = (pthread_t*) malloc(n_threads*sizeof(pthread_t)); // store all thread IDs
 	param = (struct Parameter*) malloc(n_threads*sizeof(struct Parameter)); //store Param structs
@@ -86,7 +89,6 @@ int main(int argc, char *argv[]) // Primzahl Threads
 			pthread_create(&thread_id[i], NULL, calcThread, (void*)&param[i]);
 
 	}
-	printf("Created %i Threads!\n",n_threads );
 	pthread_barrier_wait(&barrier);
 	if(debug) printf("- Debug -");
 	printf("Continue...\n");
