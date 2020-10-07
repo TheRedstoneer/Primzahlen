@@ -12,9 +12,9 @@ int main(int argc, char *argv[]) // Primzahl Threads
 {
 	pthread_t* thread_id;
 	int* singleResult;
-	__uint32_t primzahl, n_threads, i, bitlen, w_bitlen, wurzel, pre_calc;
-	__uint32_t mainResult;
-	__uint8_t debug = 0;
+	uint32_t primzahl, n_threads, i, bitlen, w_bitlen, wurzel, pre_calc;
+	uint32_t mainResult;
+	bool debug = false;
 	struct Parameter* param;
 
 	if(argc < 3 || argc > 4)
@@ -25,9 +25,9 @@ int main(int argc, char *argv[]) // Primzahl Threads
 	}
 	else
 	{
-		if(argc == 4) debug = 1;
-		primzahl = (__uint32_t) strtol(argv[1], NULL, 10);
-		n_threads = (__uint32_t) strtol(argv[2], NULL, 10);
+		if(argc == 4) debug = true;
+		primzahl = (uint32_t) strtol(argv[1], NULL, 10);
+		n_threads = (uint32_t) strtol(argv[2], NULL, 10);
 		if(n_threads > 32)
 		{
 			printf("Too many threads. max = 32\n");
@@ -44,18 +44,18 @@ int main(int argc, char *argv[]) // Primzahl Threads
 // Array for SQRT Bit Array
 	wurzel = sqrt(primzahl)+1;
 	//w_bitlen = (int)(wurzel / BIT_SIZE+1);
-	//w_bitfield = (__uint64_t*) malloc(w_bitlen*BIT_SIZE);
+	//w_bitfield = (uint64_t*) malloc(w_bitlen*BIT_SIZE);
 	//RESET_FIELD(w_bitfield,w_bitlen);
 
 	primesUntilSqare = calcWithMod(3,wurzel); //get prime number count til sqrt (without 2)
 	printf("Wurzel=%i Anzahl Primzahlen bis zur Wurzel=%i\n",wurzel,primesUntilSqare);
-	low_primes = (__uint32_t*) malloc(32*primesUntilSqare); //create array
+	low_primes = (uint32_t*) malloc(32*primesUntilSqare); //create array
 
 // Array for Bit Array
 // (prime_max - sqrt) / 2 (uneven) / 64
-	bitlen = (__uint32_t) ((primzahl-wurzel) / (2*BIT_SIZE) +n_threads);
-	bitfield = (__uint64_t*) malloc(bitlen*BIT_SIZE);
-	bits_pT = (__uint32_t) bitlen / n_threads + 1;
+	bitlen = (uint32_t) ((primzahl-wurzel) / (2*BIT_SIZE) +n_threads);
+	bitfield = (uint64_t*) malloc(bitlen*BIT_SIZE);
+	bits_pT = (uint32_t) bitlen / n_threads + 1;
 	RESET_FIELD(bitfield,bitlen);
 	printf("Created %i Threads! (%i fields, %i/thread)\n",n_threads, bitlen, bits_pT );
 
@@ -84,9 +84,9 @@ int main(int argc, char *argv[]) // Primzahl Threads
 		if(i) param[i].w_sum += param[i-1].w_primecount + param[i-1].w_sum;
 		param[i].id = i; 									//set ID
 		if(debug)
-			pthread_create(&thread_id[i], NULL, calcThreadDebug, (void*)&param[i]);
+			pthread_create(&thread_id[i], NULL, (void*)calcThreadDebug, (void*)&param[i]);
 		else
-			pthread_create(&thread_id[i], NULL, calcThread, (void*)&param[i]);
+			pthread_create(&thread_id[i], NULL, (void*)calcThread, (void*)&param[i]);
 
 	}
 	pthread_barrier_wait(&barrier);

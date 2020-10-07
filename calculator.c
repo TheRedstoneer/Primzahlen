@@ -7,11 +7,11 @@
 
 #include "control.h"
 
-void createPrimeArray(__uint32_t end)
+void createPrimeArray(uint32_t end)
 {
 
 
-	__uint32_t mod, i, j;
+	uint32_t mod, i, j;
 	unsigned short isMod;
 	for(i = 3; i < end; i +=2)
 	{
@@ -48,7 +48,7 @@ void calcThreadDebug(void *arg)
 {
 	struct Parameter *p;
 	p = (struct Parameter*) arg;
-	__uint64_t erg1, erg2;
+	uint64_t erg1, erg2;
 	printf("Starting Thread %i : %i-%i 	[and sqrt(%i-%i) with %i Prime numbers (i=%i)]\n",
 	 p->id+1, p->start, p->end, p->w_start, p->w_end, p->w_primecount, p->w_sum);
 	writePrimesInArray(p->w_sum, p->w_start, p->w_end);
@@ -68,9 +68,9 @@ void calcThreadDebug(void *arg)
 
 }
  //
-void writePrimesInArray(__uint32_t index, __uint32_t start, __uint32_t end)
+void writePrimesInArray(uint32_t index, uint32_t start, uint32_t end)
 {
-	__uint32_t i, mod;
+	uint32_t i, mod;
 	unsigned short isMod;
 
 	if(!(start % 2)) start++; //if even, start with +1
@@ -91,10 +91,10 @@ void writePrimesInArray(__uint32_t index, __uint32_t start, __uint32_t end)
 	}
 }
 
-__uint64_t calcWithMod(__uint32_t start, __uint32_t end)
+uint64_t calcWithMod(uint32_t start, uint32_t end)
 {
-	__uint64_t i, erg = 0;
-	__uint32_t mod;
+	uint64_t i, erg = 0;
+	uint32_t mod;
 	unsigned short isMod;
   if(!(start % 2)) start++;
 	for(i = start; i < end+1; i+=2)
@@ -114,12 +114,12 @@ __uint64_t calcWithMod(__uint32_t start, __uint32_t end)
 	return erg;
 }
 
-__uint64_t calcWithSieve(__uint32_t start, __uint32_t end, __uint32_t arrIndex)
+uint64_t calcWithSieve(uint32_t start, uint32_t end, uint32_t arrIndex)
 {
-	__uint32_t* countArr = (__uint32_t*) malloc(primesUntilSqare * sizeof(countArr));
-	__uint32_t j, i;
-	__uint64_t erg = 0, bit = 1, bitC = 1;
-	__uint8_t isPrime;
+	uint32_t* countArr = (uint32_t*) malloc(primesUntilSqare * sizeof(countArr));
+	uint32_t j, i;
+	uint64_t erg = 0, bit = 1, bitC = 1;
+	bool isPrime;
 	if(!(start % 2)) start++; //if even, start with +1
 	for(i = primesUntilSqare; i; i--)
 	{// (p - [(findNext(start,p)-start)/2]%p)%p
@@ -139,7 +139,7 @@ __uint64_t calcWithSieve(__uint32_t start, __uint32_t end, __uint32_t arrIndex)
 			//it's not a prime if the countArr is 0 -> divide-able
 			if(isPrime && !countArr[j]) //array[] = 0 AND isPrime = 1
 			{
-				isPrime = 0;
+				isPrime = false;
 				//printf("n=%i (%i/%i)\n",i,countArr[j],low_primes[j]);
 			}
 			countArr[j]++;
@@ -169,9 +169,9 @@ __uint64_t calcWithSieve(__uint32_t start, __uint32_t end, __uint32_t arrIndex)
 return erg;
 }
 
-__uint32_t findStart(__uint32_t start, __uint32_t mod)
+uint32_t findStart(uint32_t start, uint32_t mod)
 {
-	__uint32_t x = start;
+	uint32_t x = start;
 	while(x % mod) x+= 2; //find next divider
 				//7 - ((21- 13	)/2)	% 7 = 3
 	return mod- ((x - start)/2) % mod;
