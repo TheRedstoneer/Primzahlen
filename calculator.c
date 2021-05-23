@@ -1,8 +1,8 @@
 /*
  * calculator.c
- *	Version vom 5.12. 10:50
+ *	Version vom 23.05.2021
  *  Created on: Nov 13, 2018
- *      Author: tiws17g11
+ *      Author: David Dinse
  */
 
 #include "control.h"
@@ -11,7 +11,7 @@ void createPrimeArray(uint32_t end)
 {
 
 
-	uint32_t mod, i, j;
+	uint32_t mod, i;
 	unsigned short isMod;
 	for(i = 3; i < end; i +=2)
 	{
@@ -21,18 +21,24 @@ void createPrimeArray(uint32_t end)
 				isMod++;
 				break;
 			}
-			//if(!isMod)
-
 	}
 }
 
 void calcThread(void *arg)
 {
-	struct Parameter *p;
-	p = (struct Parameter*) arg;
-	printf("Starting Thread %i : %i-%i 	[and sqrt(%i-%i) with %i Prime numbers (i=%i)]\n",
-	 p->id+1, p->start, p->end, p->w_start, p->w_end, p->w_primecount, p->w_sum);
+	primeparam_t p;
+	p = (primeparam_t) arg;
+	bitfield_t bitfield;
+	if(!(p->start & 0x01)) p->start++;
+	bitfield.length = (uint32_t) ((p->end - p->start) / (2*BIT_SIZE)) + 1;
+	printf("Starting Thread %i : %i-%i BITFIELD=%i [sqrt(%i-%i) has %i Prime Numbers (i=%i)]\n",
+	 p->id+1, p->start, p->end, bitfield.length, p->w_start, p->w_end, p->w_primecount, p->w_sum);
 	writePrimesInArray(p->w_sum, p->w_start, p->w_end);
+
+	bitfield.field = (uint64_t*) malloc(bitfield.length*BIT_SIZE);
+	bf_reset(&bitfield);
+	p->primecount = bf_count_0(&bitfield, (p->end - p->start));
+	printf("Thread %i: TEST %u = %u\n", p->id+1, p->primecount, bitfield.length*BIT_SIZE);
 
 	printf("Thread %i: Written all low_primes into array!\n",p->id+1);
 	/* 100.000 -> 5.000 bits / 10 threads (just uneven numbers)
@@ -40,14 +46,17 @@ void calcThread(void *arg)
 	*/
 
 	pthread_barrier_wait(&barrier);
-	calcWithSieve(p->start, p->end,bits_pT*p->id);
-	printf("Thread %i: (%i-%i) finished!\n",p->id+1,p->start,p->end);
+	calcWithSieve(p->start, p->end, &bitfield);
+	p->primecount = bf_count_0(&bitfield, (p->end - p->start));
+	//printLong(bitfield.field[0]);
+	printf("Thread %i: (%i-%i) finished! %u Primes\n",p->id+1, p->start, p->end, p->primecount);
+	free(bitfield.field);
 }
 
-void calcThreadDebug(void *arg)
+/*void calcThreadDebug(void *arg)
 {
-	struct Parameter *p;
-	p = (struct Parameter*) arg;
+	primeparam_t p;
+	p = (primeparam_t) arg;
 	uint64_t erg1, erg2;
 	printf("Starting Thread %i : %i-%i 	[and sqrt(%i-%i) with %i Prime numbers (i=%i)]\n",
 	 p->id+1, p->start, p->end, p->w_start, p->w_end, p->w_primecount, p->w_sum);
@@ -66,7 +75,7 @@ void calcThreadDebug(void *arg)
 		printf("Thread %i: (%i-%i) has %li / %li Primenumbers!\n",p->id+1,p->start,p->end,erg1,erg2);
 	}
 
-}
+}*/
  //
 void writePrimesInArray(uint32_t index, uint32_t start, uint32_t end)
 {
@@ -114,65 +123,60 @@ uint64_t calcWithMod(uint32_t start, uint32_t end)
 	return erg;
 }
 
-uint64_t calcWithSieve(uint32_t start, uint32_t end, uint32_t arrIndex)
+void calcWithSieve(uint32_t start, uint32_t end, bitfield_t* bf)
 {
-	uint32_t* countArr = (uint32_t*) malloc(primesUntilSqare * sizeof(countArr));
-	uint32_t j, i;
-	uint64_t erg = 0, bit = 1, bitC = 1;
-	bool isPrime;
-	if(!(start % 2)) start++; //if even, start with +1
-	for(i = primesUntilSqare; i; i--)
-	{// (p - [(findNext(start,p)-start)/2]%p)%p
-		 countArr[i-1] = findStart(start-2, low_primes[i-1]);	//setup counting array
-		 //printf("%i starts on %i\n", low_primes[i-1], countArr[i-1]);
-	}
+	uint32_t i, currNum, offset;
 
-
-	//go through every uneven number
-	for(i = start; i < end; i+=2)
+	for(i = primesUntilSquare; i;)
 	{
-		isPrime = 1; //lets say it's a prime
-
-		//now go through every low prime
-		for(j = 0; j < primesUntilSqare; j++)
+		offset = low_primes[--i];
+		for(currNum = findStart(start, offset); currNum < end; currNum += offset*2)
 		{
-			//it's not a prime if the countArr is 0 -> divide-able
-			if(isPrime && !countArr[j]) //array[] = 0 AND isPrime = 1
-			{
-				isPrime = false;
-				//printf("n=%i (%i/%i)\n",i,countArr[j],low_primes[j]);
-			}
-			countArr[j]++;
-			//if counter reached end the low prime -> reset
-			if(countArr[j] >= low_primes[j]) countArr[j] -= low_primes[j];
-
-			//if(!(countArr[j-1] - low_primes[j-1])) countArr[j-1] = 0;
-
-		}
-		if(isPrime)
-		{
-			erg++; //debug
-			//set bit!
-			bitfield[arrIndex] |= bit;
-			//printf("%i\n",i);
-		}
-
-		bit = bit << 1; //shift ->
-		bitC++;
-		if(bitC == 64)
-		{									//test for overflow (64 bits)
-			bitC = 1;			  //-> reset
-			bit = 1;
-			arrIndex++;
+			//Set bit to indicate that this is NOT a prime!
+			//the diff (curr - start) is ALWAYS uneven!
+			bf_setbit(bf, (currNum - start) >> 1);
 		}
 	}
-return erg;
 }
 
 uint32_t findStart(uint32_t start, uint32_t mod)
 {
-	uint32_t x = start;
-	while(x % mod) x+= 2; //find next divider
-				//7 - ((21- 13	)/2)	% 7 = 3
-	return mod- ((x - start)/2) % mod;
+	// integer-division Start/Mod gets us the "real dividand" for this mod.
+	// now we just multiply it again to get the new/modified start.
+	uint32_t newStart = (uint32_t) (start/mod + 1) * mod;
+	// if its even, add mod (which is uneven) again.
+	if(!(newStart & 0x01)) newStart += mod;
+
+	return newStart;
+}
+
+uint32_t bf_count_0(bitfield_t* bf, uint32_t real_length)
+{
+	uint32_t i, result = 0, length_diff;
+	for(i = bf->length; i;)
+			result += BIT_SIZE - __builtin_popcountll(bf->field[--i]);
+
+	length_diff = BIT_SIZE * bf->length - (real_length & 0x01) ? ((real_length - 1) >> 1) : (real_length >> 1);
+	//printf("real=%u used=%u -> ignoring %i bits!\n", real_length_uneven, (BIT_SIZE * bf->length), length_diff);
+	return result;
+}
+
+//Sets a bit in the bitfield
+void bf_setbit(bitfield_t* bf, uint32_t index)
+{
+	uint16_t arr_index, bit_index;
+	arr_index = (index/BIT_SIZE);
+	bit_index = index - arr_index * BIT_SIZE;
+	bf->field[arr_index] |= (1L<<bit_index);
+}
+
+void bf_reset(bitfield_t* bf)
+{
+	uint32_t i;
+	for(i = bf->length; i;)
+			bf->field[--i] = 0;
+	bf->bitCnt = 1;			  //-> reset
+	bf->bit = 0x01;
+	bf->index = 0;
+
 }
