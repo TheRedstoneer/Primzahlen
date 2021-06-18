@@ -10,24 +10,21 @@
 
 int main(int argc, char *argv[]) // Primzahl Threads
 {
-	pthread_t* thread_id;
-	int* singleResult;
-	__uint32_t primzahl, n_threads, i, bitlen, w_bitlen, wurzel, pre_calc;
-	__uint32_t mainResult;
-	__uint8_t debug = 0;
-	struct Parameter* param;
+	uint32_t prime_number, n_threads, i, wurzel, pre_calc;
+	uint32_t mainResult;
+	bool debug = false;
+	primeparam_t param;
 
 	if(argc < 3 || argc > 4)
 	{
-		printf("USAGE: ./Primzahlen <MAX NUMBER> <THREAD COUNT> [debug]\n");
+		printf("USAGE: ./%s <MAX NUMBER> <THREAD COUNT> [debug]\n", argv[0]);
 		return(-1);
-
 	}
 	else
 	{
-		if(argc == 4) debug = 1;
-		primzahl = (__uint32_t) strtol(argv[1], NULL, 10);
-		n_threads = (__uint32_t) strtol(argv[2], NULL, 10);
+		if(argc == 4) debug = true;
+		prime_number = (uint32_t) strtol(argv[1], NULL, 10);
+		n_threads = (uint32_t) strtol(argv[2], NULL, 10);
 		if(n_threads > 32)
 		{
 			printf("Too many threads. max = 32\n");
@@ -41,28 +38,16 @@ int main(int argc, char *argv[]) // Primzahl Threads
 		printf("Could not create thread barrier.");
 		return -1;
 	}
-// Array for SQRT Bit Array
-	wurzel = sqrt(primzahl)+1;
-	//w_bitlen = (int)(wurzel / BIT_SIZE+1);
-	//w_bitfield = (__uint64_t*) malloc(w_bitlen*BIT_SIZE);
-	//RESET_FIELD(w_bitfield,w_bitlen);
 
-	primesUntilSqare = calcWithMod(3,wurzel); //get prime number count til sqrt (without 2)
-	printf("Wurzel=%i Anzahl Primzahlen bis zur Wurzel=%i\n",wurzel,primesUntilSqare);
-	low_primes = (__uint32_t*) malloc(32*primesUntilSqare); //create array
+	wurzel = sqrt(prime_number)+1;
+	primesUntilSquare = calcWithMod(3, wurzel); //get prime number count til sqrt (without 2)
+	printf("Sqrt=%i Primes until Square=%i\n", wurzel, primesUntilSquare);
+	low_primes = (uint32_t*) malloc(32*primesUntilSquare); //create array
 
-// Array for Bit Array
-// (prime_max - sqrt) / 2 (uneven) / 64
-	bitlen = (__uint32_t) ((primzahl-wurzel) / (2*BIT_SIZE) +n_threads);
-	bitfield = (__uint64_t*) malloc(bitlen*BIT_SIZE);
-	bits_pT = (__uint32_t) bitlen / n_threads + 1;
-	RESET_FIELD(bitfield,bitlen);
-	printf("Created %i Threads! (%i fields, %i/thread)\n",n_threads, bitlen, bits_pT );
+	//store Param structs
+	param = (primeparam_t) malloc(n_threads*sizeof(struct _PARAMS));
 
-	thread_id = (pthread_t*) malloc(n_threads*sizeof(pthread_t)); // store all thread IDs
-	param = (struct Parameter*) malloc(n_threads*sizeof(struct Parameter)); //store Param structs
-
-	mainResult = (primzahl-wurzel) / n_threads; //calculate Numbers per Thread
+	mainResult = (prime_number-wurzel) / n_threads; //calculate Numbers per Thread
 	pre_calc = (wurzel-3) / n_threads;
 	param[0].start = wurzel+1;
 	param[0].w_start = 3;
@@ -76,57 +61,49 @@ int main(int argc, char *argv[]) // Primzahl Threads
 		param[i].w_end = param[i].w_start + pre_calc;		 	//set sqrt end
 		if(i == n_threads-1)
 		{
-			param[i].end = primzahl;		//set real end for last thread
+			param[i].end = prime_number;		//set real end for last thread
 		 	param[i].w_end = wurzel;		//set real sqrt end for last thread
 		}
 		//printf("Thread %i Start: %i End: %i\n",i+1,param[i].start,param[i].end);
 		param[i].w_primecount = calcWithMod(param[i].w_start,param[i].w_end);
 		if(i) param[i].w_sum += param[i-1].w_primecount + param[i-1].w_sum;
 		param[i].id = i; 									//set ID
-		if(debug)
-			pthread_create(&thread_id[i], NULL, calcThreadDebug, (void*)&param[i]);
-		else
-			pthread_create(&thread_id[i], NULL, calcThread, (void*)&param[i]);
+		param[i].primecount = 0;
+		pthread_create(&param[i].tid, NULL, (void*)calcThread, (void*)&param[i]);
 
 	}
 	pthread_barrier_wait(&barrier);
 	if(debug) printf("- Debug -");
 	printf("Continue...\n");
 
+	mainResult = primesUntilSquare + 1;
 	//Threads haben ihren bereich fertig gerechnet
 	//threads einsammeln
 	for(i = 0; i < n_threads; i++)
 	{
-		if(pthread_join(thread_id[i],NULL))
+		if(pthread_join(param[i].tid, NULL))
 		{
 			printf("Could not join Thread %i\n", i);
 			return -1;
 		}
-	}
-	if(debug) return 0;
-	//printLowPrimes();
-	mainResult = primesUntilSqare + 1;
-	for(i = bitlen; i > 0; i--)
-	{
-		//printLong(bitfield[i-1]);
-		mainResult += __builtin_popcountll(bitfield[i-1]);
-		//mainResult += bitfield[i-1];
-
+		mainResult += param[i].primecount;
 	}
 
-	printf("\nErgebnis: %i\n", mainResult);
+	printf("\nThere are %i Primenumbers from 0-%i\n", mainResult, prime_number);
+	free(low_primes);
+	free(param);
 	return 0;
 }
 
-void printLong(long x)
+void printLong(uint64_t x)
 {
-	int i;
-	for(i = 32; i >= 0 ; i--)
+	uint64_t i;
+	for(i = 0x8000000000000000; i; i = i >> 1)
 	{
-		if((x&(1 << i%64)) == 0)
-			printf("0");
-		else
+		if(i & x)
 			printf("1");
+		else
+			printf("0");
 
 	}
 	printf("\n");
@@ -135,7 +112,7 @@ void printLong(long x)
 void printLowPrimes()
 {
 	int i;
-	for(i = 0; i < primesUntilSqare; i++)
+	for(i = 0; i < primesUntilSquare; i++)
 		printf("%i ",low_primes[i]);
 	printf("\n");
 }
