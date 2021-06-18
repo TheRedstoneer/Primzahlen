@@ -8,21 +8,19 @@
 #include "control.h"
 
 
-int main(int argc, char *argv[]) // Primzahl Threads
+int main(int argc, char *argv[])
 {
 	uint32_t prime_number, n_threads, i, wurzel, pre_calc;
 	uint32_t mainResult;
-	bool debug = false;
 	primeparam_t param;
 
 	if(argc < 3 || argc > 4)
 	{
-		printf("USAGE: ./%s <MAX NUMBER> <THREAD COUNT> [debug]\n", argv[0]);
+		printf("USAGE: ./%s <MAX NUMBER> <THREAD COUNT>\n", argv[0]);
 		return(-1);
 	}
 	else
 	{
-		if(argc == 4) debug = true;
 		prime_number = (uint32_t) strtol(argv[1], NULL, 10);
 		n_threads = (uint32_t) strtol(argv[2], NULL, 10);
 		if(n_threads > 32)
@@ -73,12 +71,9 @@ int main(int argc, char *argv[]) // Primzahl Threads
 
 	}
 	pthread_barrier_wait(&barrier);
-	if(debug) printf("- Debug -");
 	printf("Continue...\n");
 
 	mainResult = primesUntilSquare + 1;
-	//Threads haben ihren bereich fertig gerechnet
-	//threads einsammeln
 	for(i = 0; i < n_threads; i++)
 	{
 		if(pthread_join(param[i].tid, NULL))
