@@ -30,52 +30,28 @@ void calcThread(void *arg)
 	p = (primeparam_t) arg;
 	bitfield_t bitfield;
 	if(!(p->start & 0x01)) p->start++;
+	if(!(p->end & 0x01)) p->end--;
 	bitfield.length = (uint32_t) ((p->end - p->start) / (2*BIT_SIZE)) + 1;
 	printf("Starting Thread %i : %i-%i BITFIELD=%i [sqrt(%i-%i) has %i Prime Numbers (i=%i)]\n",
 	 p->id+1, p->start, p->end, bitfield.length, p->w_start, p->w_end, p->w_primecount, p->w_sum);
 	writePrimesInArray(p->w_sum, p->w_start, p->w_end);
 
 	bitfield.field = (uint64_t*) malloc(bitfield.length*BIT_SIZE);
-	bf_reset(&bitfield);
-	p->primecount = bf_count_0(&bitfield, (p->end - p->start));
-	printf("Thread %i: TEST %u = %u\n", p->id+1, p->primecount, bitfield.length*BIT_SIZE);
-
-	printf("Thread %i: Written all low_primes into array!\n",p->id+1);
-	/* 100.000 -> 5.000 bits / 10 threads (just uneven numbers)
-		-> 5.000 / 64 = 79 fields
-	*/
+	bfReset(&bitfield);
 
 	pthread_barrier_wait(&barrier);
 	calcWithSieve(p->start, p->end, &bitfield);
-	p->primecount = bf_count_0(&bitfield, (p->end - p->start));
-	//printLong(bitfield.field[0]);
+	//bfPrint(&bitfield);
+#ifdef DEBUG
+	p->primecount = bfCount0(&bitfield, (p->end - p->start), calcWithMod(p->start, p->end));
+#else
+	p->primecount = bfCount0(&bitfield, (p->end - p->start), 0);
+#endif
+
 	printf("Thread %i: (%i-%i) finished! %u Primes\n",p->id+1, p->start, p->end, p->primecount);
 	free(bitfield.field);
 }
 
-/*void calcThreadDebug(void *arg)
-{
-	primeparam_t p;
-	p = (primeparam_t) arg;
-	uint64_t erg1, erg2;
-	printf("Starting Thread %i : %i-%i 	[and sqrt(%i-%i) with %i Prime numbers (i=%i)]\n",
-	 p->id+1, p->start, p->end, p->w_start, p->w_end, p->w_primecount, p->w_sum);
-	writePrimesInArray(p->w_sum, p->w_start, p->w_end);
-
-	printf("Thread %i: Written all low_primes into array!\n",p->id+1);
-	pthread_barrier_wait(&barrier);
-	erg1 = calcWithSieve(p->start, p->end,bits_pT*p->id);
-	erg2 = calcWithMod(p->start, p->end);
-	if(erg1 == erg2)
-	printf("Thread %i: (%i-%i) has [%li] Primenumbers!\n",p->id+1,p->start,p->end,erg2);
-	else
-	{
-		if(erg1 > erg2)		erg2 = erg1 - erg2;
-		else erg2 -= erg1;
-		printf("Thread %i: (%i-%i) has %li / %li Primenumbers!\n",p->id+1,p->start,p->end,erg1,erg2);
-	}
-
-}*/
  //
 void writePrimesInArray(uint32_t index, uint32_t start, uint32_t end)
 {
@@ -100,7 +76,7 @@ void writePrimesInArray(uint32_t index, uint32_t start, uint32_t end)
 	}
 }
 
-uint64_t calcWithMod(uint32_t start, uint32_t end)
+uint32_t calcWithMod(uint32_t start, uint32_t end)
 {
 	uint64_t i, erg = 0;
 	uint32_t mod;
@@ -123,6 +99,10 @@ uint64_t calcWithMod(uint32_t start, uint32_t end)
 	return erg;
 }
 
+/* Sieve of Eratosthenes
+*  it iterates through all the low primes and marks every
+*	 multiple as a non-prime (bitset)
+*/
 void calcWithSieve(uint32_t start, uint32_t end, bitfield_t* bf)
 {
 	uint32_t i, currNum, offset;
@@ -133,8 +113,8 @@ void calcWithSieve(uint32_t start, uint32_t end, bitfield_t* bf)
 		for(currNum = findStart(start, offset); currNum < end; currNum += offset*2)
 		{
 			//Set bit to indicate that this is NOT a prime!
-			//the diff (curr - start) is ALWAYS uneven!
-			bf_setbit(bf, (currNum - start) >> 1);
+			//the diff (curr - start) is ALWAYS even!
+			bfSetbit(bf, (currNum - start) >> 1);
 		}
 	}
 }
@@ -150,27 +130,48 @@ uint32_t findStart(uint32_t start, uint32_t mod)
 	return newStart;
 }
 
-uint32_t bf_count_0(bitfield_t* bf, uint32_t real_length)
+uint32_t bfCount0(bitfield_t* bf, uint32_t real_length, uint32_t debugArg)
 {
-	uint32_t i, result = 0, length_diff;
+	uint32_t i, result = 0, length_diff, real_length_div, sieveRes;
 	for(i = bf->length; i;)
 			result += BIT_SIZE - __builtin_popcountll(bf->field[--i]);
 
-	length_diff = BIT_SIZE * bf->length - (real_length & 0x01) ? ((real_length - 1) >> 1) : (real_length >> 1);
-	//printf("real=%u used=%u -> ignoring %i bits!\n", real_length_uneven, (BIT_SIZE * bf->length), length_diff);
-	return result;
+#ifdef DEBUG
+
+	real_length_div = real_length >> 1; //(real_length & 0x01) ? ((real_length - 1) >> 1) : ((real_length - 2) >> 1);
+	length_diff = BIT_SIZE * bf->length - real_length_div;
+	//length_diff = BIT_SIZE * bf->length - real_length;
+	sieveRes = result - length_diff;
+	char vgC = (sieveRes < debugArg) ? '<' : '>';
+	//if(sieveRes - debugArg)
+		printf("real=%u div=%u used=%u ignore=%i erg=%u %c %u\n", real_length, real_length_div, (BIT_SIZE * bf->length), length_diff, sieveRes, vgC, debugArg);
+	// TODO: Maybe the error is in the sieve
+	return 0;
+
+#else // Normal Code
+
+	length_diff = BIT_SIZE * bf->length - (real_length >> 1);
+	return result - length_diff;
+
+#endif
+}
+
+void bfPrint(bitfield_t* bf)
+{
+	for(uint32_t i = bf->length; i;)
+		printLong(bf->field[--i]);
 }
 
 //Sets a bit in the bitfield
-void bf_setbit(bitfield_t* bf, uint32_t index)
+void bfSetbit(bitfield_t* bf, uint32_t index)
 {
-	uint16_t arr_index, bit_index;
+	uint32_t arr_index, bit_index;
 	arr_index = (index/BIT_SIZE);
 	bit_index = index - arr_index * BIT_SIZE;
 	bf->field[arr_index] |= (1L<<bit_index);
 }
 
-void bf_reset(bitfield_t* bf)
+void bfReset(bitfield_t* bf)
 {
 	uint32_t i;
 	for(i = bf->length; i;)

@@ -8,6 +8,8 @@
 #ifndef CONTROL_H_
 #define CONTROL_H_
 
+//#define DEBUG
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -39,15 +41,16 @@ typedef struct _BITFIELD
 
 void createPrimeArray(uint32_t end);
 void calcThread(void *args);
-uint64_t calcWithMod(uint32_t start, uint32_t end);
+uint32_t calcWithMod(uint32_t start, uint32_t end);
 void calcWithSieve(uint32_t start, uint32_t end, bitfield_t* bf);
 void writePrimesInArray(uint32_t index, uint32_t start, uint32_t end);
 void printLong(uint64_t x);
 uint32_t findStart(uint32_t start, uint32_t mod);
 void printLowPrimes();
-uint32_t bf_count_0(bitfield_t* bf, uint32_t real_length);
-void bf_setbit(bitfield_t* bf, uint32_t index);
-void bf_reset(bitfield_t* bf);
+uint32_t bfCount0(bitfield_t* bf, uint32_t real_length, uint32_t debugArg);
+void bfSetbit(bitfield_t* bf, uint32_t index);
+void bfPrint(bitfield_t* bf);
+void bfReset(bitfield_t* bf);
 
 #define BIT_SIZE 64
 
